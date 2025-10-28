@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DoxBin - Информационный поиск</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 25%, #0a0a0a 50%, #1a1a1a 75%, #0a0a0a 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 8s ease infinite;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+            z-index: 10;
+        }
+
+        .header {
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            font-size: 3.5em;
+            font-weight: 800;
+            background: linear-gradient(45deg, #fff 30%, #888 70%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(255,255,255,0.3);
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+
+        .tagline {
+            font-size: 1.2em;
+            color: #b0b0b0;
+            font-style: italic;
+            margin-bottom: 30px;
+        }
+
+        .input-section {
+            background: rgba(20, 20, 20, 0.8);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.6),
+                        inset 0 0 20px rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        .phone-input {
+            width: 100%;
+            padding: 15px 20px;
+            font-size: 18px;
+            background: rgba(10, 10, 10, 0.8);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: #fff;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .phone-input:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+        }
+
+        .scan-btn {
+            background: linear-gradient(45deg, #2a2a2a, #4a4a4a);
+            color: white;
+            border: none;
+            padding: 16px 40px;
+            font-size: 18px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .scan-btn:hover {
+            background: linear-gradient(45deg, #3a3a3a, #5a5a5a);
+            transform: translateY(-2px);
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.7);
+        }
+
+        .loading-section {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .loading-bar-container {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .loading-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #fff, #888);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .percentage {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #fff;
+            margin: 10px 0;
+        }
+
+        .status-text {
+            color: #b0b0b0;
+            font-size: 1.1em;
+            margin: 10px 0;
+        }
+
+        /* Стили для вирусов и ошибок */
+        .virus {
+            position: fixed;
+            display: none;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        .error-window {
+            position: fixed;
+            background: #c00000;
+            color: white;
+            padding: 15px;
+            border: 3px solid white;
+            font-family: 'MS Sans Serif', sans-serif;
+            z-index: 1001;
+            font-size: 14px;
+            max-width: 300px;
+            box-shadow: 0 0 30px red;
+        }
+
+        .bsod {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0078d7;
+            color: white;
+            font-family: 'Lucida Console', monospace;
+            padding: 50px;
+            z-index: 3000;
+            display: none;
+        }
+
+        .scare-image {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 4000;
+            display: none;
+        }
+
+        .flashing {
+            animation: flash 0.3s infinite;
+        }
+
+        @keyframes flash {
+            0% { opacity: 1; }
+            50% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        .shake {
+            animation: shake 0.5s infinite;
+        }
+
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+
+        /* Стили для финального экрана */
+        .hacker-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #ff0000, #000000);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .glitch {
+            font-size: 3em;
+            font-weight: bold;
+            text-transform: uppercase;
+            position: relative;
+            text-shadow: 0.05em 0 0 #00fffc, -0.03em -0.04em 0 #fc00ff,
+                         0.025em 0.04em 0 #fffc00;
+            animation: glitch 725ms infinite;
+            margin-bottom: 30px;
+        }
+
+        @keyframes glitch {
+            0% { text-shadow: 0.05em 0 0 #00fffc, -0.03em -0.04em 0 #fc00ff, 0.025em 0.04em 0 #fffc00; }
+            15% { text-shadow: 0.05em 0 0 #00fffc, -0.03em -0.04em 0 #fc00ff, 0.025em 0.04em 0 #fffc00; }
+            16% { text-shadow: -0.05em -0.025em 0 #00fffc, 0.025em 0.035em 0 #fc00ff, -0.05em -0.05em 0 #fffc00; }
+            49% { text-shadow: -0.05em -0.025em 0 #00fffc, 0.025em 0.035em 0 #fc00ff, -0.05em -0.05em 0 #fffc00; }
+            50% { text-shadow: 0.05em 0.035em 0 #00fffc, 0.03em 0 0 #fc00ff, 0 -0.04em 0 #fffc00; }
+            99% { text-shadow: 0.05em 0.035em 0 #00fffc, 0.03em 0 0 #fc00ff, 0 -0.04em 0 #fffc00; }
+            100% { text-shadow: -0.05em 0 0 #00fffc, -0.025em -0.04em 0 #fc00ff, -0.04em -0.025em 0 #fffc00; }
+        }
+
+        .warning-text {
+            font-size: 1.2em;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .password-section {
+            margin: 30px 0;
+        }
+
+        .password-input {
+            padding: 15px;
+            font-size: 18px;
+            background: #000;
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            border-radius: 5px;
+            text-align: center;
+            margin-bottom: 15px;
+            width: 300px;
+        }
+
+        .hint {
+            color: #ffff00;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+
+        .matrix-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.3;
+            z-index: -1;
+        }
+
+        .corrupted {
+            filter: contrast(2) brightness(0.8) hue-rotate(90deg);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">DOXBIN</div>
+            <div class="tagline">Полная информация по любому номеру</div>
+        </div>
+
+        <div class="input-section">
+            <div class="input-group">
+                <input type="tel" class="phone-input" id="phoneInput" placeholder="+7 (XXX) XXX-XX-XX" maxlength="18">
+            </div>
+            <button class="scan-btn" id="scanBtn">Запустить пробив</button>
+            
+            <div class="loading-section" id="loadingSection">
+                <div class="status-text" id="statusText">Подключение к базе данных...</div>
+                <div class="loading-bar-container">
+                    <div class="loading-bar" id="loadingBar"></div>
+                </div>
+                <div class="percentage" id="percentage">0%</div>
+                <div class="status-text" id="detailText"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BSOD -->
+    <div class="bsod" id="bsod">
+        <div style="font-size: 24px; margin-bottom: 20px;">:(</div>
+        <div style="font-size: 18px; margin-bottom: 30px;">
+            Your PC ran into a problem and needs to restart. We're just<br>
+            collecting some error info, and then we'll restart for you.<br><br>
+            STOP CODE: CRITICAL_PROCESS_DIED
+        </div>
+        <div style="font-size: 14px;">
+            0% complete<br><br>
+            Contact your system administrator or technical support group for further assistance.
+        </div>
+    </div>
+
+    <!-- Скример изображение -->
+    <img src="https://i.imgur.com/3sW5P0c.png" class="scare-image" id="scareImage" style="display: none;">
+
+    <!-- Финальный экран хакера -->
+    <div class="hacker-screen" id="hackerScreen">
+        <div class="matrix-bg" id="matrixBg"></div>
+        <div class="glitch">ПОПАЛСЯ, ХАКЕР!</div>
+        
+        <div class="warning-text">
+            ⚠️ СИСТЕМА ЗАБЛОКИРОВАНА! ⚠️<br>
+            ВАШИ ФАЙЛЫ ШИФРУЮТСЯ...<br>
+            ВЕБ-КАМЕРА АКТИВИРОВАНА<br>
+            При попытке закрыть браузер все данные будут уничтожены!<br>
+            Для разблокировки введите пароль безопасности
+        </div>
+
+        <div class="password-section">
+            <input type="password" class="password-input" id="passwordInput" placeholder="Введите пароль...">
+            <div class="hint">Подсказка: Кто ты? (на русском, маленькими буквами)</div>
+        </div>
+    </div>
+
+    <!-- Аудио элементы -->
+    <audio id="scarySound" loop>
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-horror-laugh-439.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="errorSound">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-computer-error-alert-2373.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="screamSound">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-woman-scream-389.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="glitchSound">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-glitch-sound-2798.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        // Массив ошибок для создания
+        const errorMessages = [
+            "CRITICAL_PROCESS_DIED",
+            "SYSTEM_THREAD_EXCEPTION_NOT_HANDLED", 
+            "IRQL_NOT_LESS_OR_EQUAL",
+            "VIDEO_TDR_FAILURE",
+            "PAGE_FAULT_IN_NONPAGED_AREA",
+            "KERNEL_SECURITY_CHECK_FAILURE",
+            "MEMORY_MANAGEMENT",
+            "DPC_WATCHDOG_VIOLATION",
+            "UNEXPECTED_STORE_EXCEPTION",
+            "WHEA_UNCORRECTABLE_ERROR",
+            "ACCESS_VIOLATION",
+            "STACK_BUFFER_OVERRUN",
+            "FATAL_SYSTEM_ERROR",
+            "HARDWARE_FAILURE",
+            "DRIVER_IRQL_NOT_LESS_OR_EQUAL",
+            "SYSTEM_SERVICE_EXCEPTION"
+        ];
+
+        // Функция создания случайной ошибки
+        function createRandomError() {
+            const error = document.createElement('div');
+            error.className = 'error-window';
+            error.textContent = `ERROR: ${errorMessages[Math.floor(Math.random() * errorMessages.length)]}\n0x${Math.random().toString(16).substr(2,8).toUpperCase()}`;
+            
+            // Случайная позиция
+            error.style.left = Math.random() * (window.innerWidth - 300) + 'px';
+            error.style.top = Math.random() * (window.innerHeight - 100) + 'px';
+            
+            document.body.appendChild(error);
+            
+            // Анимация появления
+            setTimeout(() => {
+                error.style.display = 'block';
+                document.getElementById('errorSound').play().catch(e => console.log('Audio error:', e));
+            }, 100);
+            
+            // Дрожание
+            let shakeInterval = setInterval(() => {
+                error.style.transform = `translate(${Math.random()*10-5}px, ${Math.random()*10-5}px)`;
+            }, 50);
+            
+            // Удаление через случайное время
+            setTimeout(() => {
+                clearInterval(shakeInterval);
+                error.remove();
+            }, 2000 + Math.random() * 3000);
+        }
+
+        // Функция для массового создания ошибок
+        function createErrorStorm() {
+            for(let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    createRandomError();
+                }, i * 100);
+            }
+        }
+
+        // Функция синего экрана
+        function showBSOD() {
+            document.getElementById('bsod').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+            
+            setTimeout(() => {
+                document.getElementById('bsod').style.display = 'none';
+            }, 3000);
+        }
+
+        // Функция скримера
+        function showScare() {
+            const scareImage = document.getElementById('scareImage');
+            scareImage.style.display = 'block';
+            document.getElementById('screamSound').play().catch(e => console.log('Audio error:', e));
+            
+            setTimeout(() => {
+                scareImage.style.display = 'none';
+            }, 500);
+        }
+
+        // Матричный фон
+        function startMatrix() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const matrixBg = document.getElementById('matrixBg');
+            matrixBg.appendChild(canvas);
+            
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            const chars = "01010101010101010101010101010101";
+            const charArray = chars.split("");
+            const fontSize = 14;
+            const columns = canvas.width / fontSize;
+            const drops = [];
+            
+            for(let i = 0; i < columns; i++) {
+                drops[i] = 1;
+            }
+            
+            function draw() {
+                ctx.fillStyle = "rgba(0, 0, 0, 0.04)";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                ctx.fillStyle = "#0F0";
+                ctx.font = fontSize + "px monospace";
+                
+                for(let i = 0; i < drops.length; i++) {
+                    const text = charArray[Math.floor(Math.random() * charArray.length)];
+                    ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                    
+                    if(drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                        drops[i] = 0;
+                    }
+                    drops[i]++;
+                }
+            }
+            
+            setInterval(draw, 35);
+        }
+
+        // Основная функция запуска
+        document.getElementById('scanBtn').addEventListener('click', function() {
+            const phone = document.getElementById('phoneInput').value;
+            if (!phone) {
+                alert('Введите номер телефона!');
+                return;
+            }
+
+            const scanBtn = this;
+            const loadingSection = document.getElementById('loadingSection');
+            const loadingBar = document.getElementById('loadingBar');
+            const percentage = document.getElementById('percentage');
+            const statusText = document.getElementById('statusText');
+            const detailText = document.getElementById('detailText');
+            const scarySound = document.getElementById('scarySound');
+
+            // Начало "пробива"
+            scanBtn.disabled = true;
+            loadingSection.style.display = 'block';
+
+            // Запуск страшных эффектов
+            setTimeout(() => {
+                // Запуск звуков
+                scarySound.volume = 0.7;
+                scarySound.play().catch(e => console.log('Audio error:', e));
+                
+                // Массовые ошибки
+                createErrorStorm();
+                
+                // Случайные скримеры
+                setTimeout(showScare, 1500);
+                setTimeout(showScare, 4000);
+                
+                // Синий экран
+                setTimeout(showBSOD, 2500);
+                
+                // Дополнительные эффекты
+                setTimeout(() => {
+                    document.body.classList.add('shake', 'corrupted');
+                }, 1000);
+                
+            }, 800);
+
+            // Основной процесс "пробива"
+            setTimeout(() => {
+                let progress = 0;
+                const progressInterval = setInterval(() => {
+                    progress += Math.random() * 8;
+                    if (progress >= 100) {
+                        progress = 100;
+                        clearInterval(progressInterval);
+                        
+                        // Финальный переход к экрану хакера
+                        setTimeout(() => {
+                            document.body.style.transform = 'scale(0.8) rotate(5deg)';
+                            document.body.style.filter = 'blur(10px)';
+                            
+                            setTimeout(() => {
+                                document.getElementById('hackerScreen').style.display = 'flex';
+                                document.body.classList.remove('shake', 'corrupted');
+                                document.body.style.transform = '';
+                                document.body.style.filter = '';
+                                startMatrix();
+                                scarySound.pause();
+                            }, 1000);
+                            
+                        }, 1500);
+                    }
+                    
+                    loadingBar.style.width = progress + '%';
+                    percentage.textContent = Math.floor(progress) + '%';
+                    
+                    // Обновление статусов с эффектами
+                    if (progress < 20) {
+                        statusText.textContent = 'ПОДКЛЮЧЕНИЕ К БАЗЕ ДАННЫХ...';
+                        detailText.textContent = '✓ Установка соединения с ФСБ';
+                        statusText.classList.add('flashing');
+                    } else if (progress < 40) {
+                        statusText.textContent = 'АНАЛИЗ МЕТАДАННЫХ...';
+                        detailText.textContent = '⚠ Сканирование социальных сетей';
+                        statusText.classList.remove('flashing');
+                    } else if (progress < 60) {
+                        statusText.textContent = 'ПОИСК ФИНАНСОВОЙ ИНФОРМАЦИИ...';
+                        detailText.textContent = '💳 Доступ к банковским операциям';
+                        statusText.classList.add('flashing');
+                    } else if (progress < 80) {
+                        statusText.textContent = 'ПЕРЕХВАТ ЛИЧНЫХ ДАННЫХ...';
+                        detailText.textContent = '📱 Мониторинг переписки';
+                        statusText.classList.remove('flashing');
+                    } else {
+                        statusText.textContent = 'ФОРМИРОВАНИЕ ОТЧЕТА...';
+                        detailText.textContent = '🔒 Шифрование полученных данных';
+                        statusText.classList.add('flashing');
+                    }
+                    
+                    // Случайные эффекты во время загрузки
+                    if (Math.random() < 0.1) {
+                        document.getElementById('glitchSound').play().catch(e => console.log('Audio error:', e));
+                        document.body.style.filter = 'hue-rotate(90deg)';
+                        setTimeout(() => {
+                            document.body.style.filter = '';
+                        }, 200);
+                    }
+                    
+                }, 120);
+            }, 6000);
+        });
+
+        // Проверка пароля
+        document.getElementById('passwordInput').addEventListener('input', function(e) {
+            if (e.target.value.toLowerCase() === 'ялох') {
+                alert('✅ СИСТЕМА РАЗБЛОКИРОВАНА! Это был розыгрыш! Никакие данные не были украдены.');
+                document.getElementById('hackerScreen').style.display = 'none';
+                document.getElementById('scarySound').pause();
+                document.body.classList.remove('shake', 'corrupted');
+            }
+        });
+
+        // Предотвращение закрытия с угрозами
+        window.addEventListener('beforeunload', function(e) {
+            if (document.getElementById('hackerScreen').style.display === 'flex') {
+                e.preventDefault();
+                e.returnValue = 'ВНИМАНИЕ! При закрытии браузера все ваши файлы будут удалены!';
+                return 'ВНИМАНИЕ! При закрытии браузера все ваши файлы будут удалены!';
+            }
+        });
+
+        // Маска для номера телефона
+        document.getElementById('phoneInput').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.startsWith('7') || value.startsWith('8')) {
+                value = value.substring(1);
+            }
+            if (value.length > 0) {
+                value = '+7 (' + value;
+                if (value.length > 7) value = value.substring(0, 7) + ') ' + value.substring(7);
+                if (value.length > 12) value = value.substring(0, 12) + '-' + value.substring(12);
+                if (value.length > 15) value = value.substring(0, 15) + '-' + value.substring(15);
+            }
+            e.target.value = value;
+        });
+
+        // Случайные мерцания на странице
+        setInterval(() => {
+            if (Math.random() < 0.05 && document.getElementById('hackerScreen').style.display !== 'flex') {
+                document.body.style.opacity = '0.7';
+                setTimeout(() => {
+                    document.body.style.opacity = '1';
+                }, 100);
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
